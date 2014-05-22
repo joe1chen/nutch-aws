@@ -15,7 +15,7 @@ SECRET_ACCESS_KEY
 EC2_KEY_NAME = 
 AWS_REGION = us-east-1
 KEYPATH	= ${EC2_KEY_NAME}.pem
-S3_BUCKET = 
+S3_BUCKET =
 CLUSTERSIZE	= 3
 DEPTH = 3
 TOPN = 5
@@ -26,6 +26,8 @@ AWS	= aws
 ANT = ant
 S3_API = s3api
 #
+NUTCH_VERSION = 1.8
+
 ifeq ($(origin AWS_CONFIG_FILE), undefined)
 	export AWS_CONFIG_FILE:=aws.conf
 endif
@@ -69,7 +71,7 @@ STEPS = '[ \
 	      "MainClass": "org.apache.nutch.crawl.Crawl", \
 	      "Args": \
 	        ["s3://${S3_BUCKET}/urls", "-dir", "crawl", "-depth", "${DEPTH}", "-topN", "${TOPN}"], \
-	      "Jar": "s3://${S3_BUCKET}/lib/apache-nutch-1.6.job.jar" \
+	      "Jar": "s3://${S3_BUCKET}/lib/apache-nutch-${NUTCH_VERSION}.job.jar" \
 	    }, \
 	  "Name": "nutch-crawl" \
 	}, \
@@ -142,8 +144,8 @@ create:
 #
 
 .PHONY: bootstrap
-bootstrap: | aws.conf apache-nutch-1.6-src.zip apache-nutch-1.6/build/apache-nutch-1.6.job  creates3bucket seedfiles2s3
-	${AWS} ${S3_API} put-object --bucket ${S3_BUCKET} --key lib/apache-nutch-1.6.job.jar --body apache-nutch-1.6/build/apache-nutch-1.6.job
+bootstrap: | aws.conf apache-nutch-${NUTCH_VERSION}-src.zip apache-nutch-${NUTCH_VERSION}/build/apache-nutch-${NUTCH_VERSION}.job  creates3bucket seedfiles2s3
+	${AWS} ${S3_API} put-object --bucket ${S3_BUCKET} --key lib/apache-nutch-${NUTCH_VERSION}.job.jar --body apache-nutch-${NUTCH_VERSION}/build/apache-nutch-${NUTCH_VERSION}.job
 
 #
 #  create se bucket
@@ -169,11 +171,16 @@ apache-nutch-1.6-src.zip:
 	unzip apache-nutch-1.6-src.zip
 	echo ${NUTCH-SITE-CONF} > apache-nutch-1.6/conf/nutch-site.xml
 
+apache-nutch-1.8-src.zip:
+	curl -O http://archive.apache.org/dist/nutch/1.8/apache-nutch-1.8-src.zip
+	unzip apache-nutch-1.8-src.zip
+	echo ${NUTCH-SITE-CONF} > apache-nutch-1.8/conf/nutch-site.xml
+
 #
 #  build nutch job jar
 #
-apache-nutch-1.6/build/apache-nutch-1.6.job: $(wildcard apache-nutch-1.6/conf/*)
-	${ANT} -f apache-nutch-1.6/build.xml
+apache-nutch-${NUTCH_VERSION}/build/apache-nutch-${NUTCH_VERSION}.job: $(wildcard apache-nutch-${NUTCH_VERSION}/conf/*)
+	${ANT} -f apache-nutch-${NUTCH_VERSION}/build.xml
 
 #
 # ssh: quick wrapper to ssh into the master node of the cluster
