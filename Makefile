@@ -11,10 +11,9 @@
 # commands setup (ADJUST THESE IF NEEDED)
 #
 ACCESS_KEY_ID = 
-SECRET_ACCESS_KEY = 
-EC2_KEY_NAME = paulomagalhaes
-AWS_REGION=us-east-1
+SECRET_ACCESS_KEY 
 EC2_KEY_NAME = 
+AWS_REGION = us-east-1
 KEYPATH	= ${EC2_KEY_NAME}.pem
 S3_BUCKET = 
 CLUSTERSIZE	= 3
@@ -22,9 +21,10 @@ DEPTH = 3
 TOPN = 5
 MASTER_INSTANCE_TYPE = m1.small
 SLAVE_INSTANCE_TYPE = m1.small
-#  
+#
 AWS	= aws
 ANT = ant
+S3_API = s3api
 #
 ifeq ($(origin AWS_CONFIG_FILE), undefined)
 	export AWS_CONFIG_FILE:=aws.conf
@@ -55,56 +55,56 @@ NUTCH-SITE-CONF= "<?xml version=\"1.0\"?> \
 </configuration>"
 
 INSTANCES = '{  \
-	"instance_count": ${CLUSTERSIZE},  \
-	"master_instance_type": "${MASTER_INSTANCE_TYPE}",  \
-	"hadoop_version": "1.0.3",  \
-	"keep_job_flow_alive_when_no_steps": false,  \
-	"slave_instance_type": "${SLAVE_INSTANCE_TYPE}",  \
-	"ec_2_key_name": "${EC2_KEY_NAME}"  \
+	"InstanceCount": ${CLUSTERSIZE},  \
+	"MasterInstanceType": "${MASTER_INSTANCE_TYPE}",  \
+	"HadoopVersion": "1.0.3",  \
+	"KeepJobFlowAliveWhenNoSteps": false,  \
+	"SlaveInstanceType": "${SLAVE_INSTANCE_TYPE}",  \
+	"Ec2KeyName": "${EC2_KEY_NAME}"  \
 }'
 
 STEPS = '[ \
 	{  \
-	  "hadoop_jar_step": { \
-	      "main_class": "org.apache.nutch.crawl.Crawl", \
-	      "args": \
+	  "HadoopJarStep": { \
+	      "MainClass": "org.apache.nutch.crawl.Crawl", \
+	      "Args": \
 	        ["s3://${S3_BUCKET}/urls", "-dir", "crawl", "-depth", "${DEPTH}", "-topN", "${TOPN}"], \
-	      "jar": "s3://${S3_BUCKET}/lib/apache-nutch-1.6.job.jar" \
+	      "Jar": "s3://${S3_BUCKET}/lib/apache-nutch-1.6.job.jar" \
 	    }, \
-	  "name": "nutch-crawl" \
+	  "Name": "nutch-crawl" \
 	}, \
 	{  \
-	  "hadoop_jar_step": { \
-	      "main_class": "org.apache.nutch.segment.SegmentMerger", \
-	      "args": \
+	  "HadoopJarStep": { \
+	      "MainClass": "org.apache.nutch.segment.SegmentMerger", \
+	      "Args": \
 	        ["crawl/mergedsegments", "-dir", "crawl/segments"], \
-	      "jar": "s3://${S3_BUCKET}/lib/apache-nutch-1.6.job.jar" \
+	      "Jar": "s3://${S3_BUCKET}/lib/apache-nutch-1.6.job.jar" \
 	    }, \
-	  "name": "nutch-crawl" \
+	  "Name": "nutch-crawl" \
 	}, \
 	{  \
-	  "hadoop_jar_step": { \
-	      "args": \
+	  "HadoopJarStep": { \
+	      "Args": \
 	        ["--src","hdfs:///user/hadoop/crawl/crawldb","--dest","s3://${S3_BUCKET}/crawl/crawldb","--srcPattern",".*","--outputCodec","snappy"], \
-	      "jar": "s3://elasticmapreduce/libs/s3distcp/role/s3distcp.jar" \
+	      "Jar": "s3://elasticmapreduce/libs/s3distcp/role/s3distcp.jar" \
 	    }, \
-	  "name": "crawlData2S3" \
+	  "Name": "crawlData2S3" \
 	 }, \
 	{  \
-	  "hadoop_jar_step": { \
-	      "args": \
+	  "HadoopJarStep": { \
+	      "Args": \
 	        ["--src","hdfs:///user/hadoop/crawl/linkdb","--dest","s3://${S3_BUCKET}/crawl/linkdb","--srcPattern",".*","--outputCodec","snappy"], \
-	      "jar": "s3://elasticmapreduce/libs/s3distcp/role/s3distcp.jar" \
+	      "Jar": "s3://elasticmapreduce/libs/s3distcp/role/s3distcp.jar" \
 	    }, \
-	  "name": "crawlData2S3" \
+	  "Name": "crawlData2S3" \
 	 }, \
 	{  \
-	  "hadoop_jar_step": { \
-	      "args": \
+	  "HadoopJarStep": { \
+	      "Args": \
 	        ["--src","hdfs:///user/hadoop/crawl/mergedsegments","--dest","s3://${S3_BUCKET}/crawl/segments","--srcPattern",".*","--outputCodec","snappy"], \
-	      "jar": "s3://elasticmapreduce/libs/s3distcp/role/s3distcp.jar" \
+	      "Jar": "s3://elasticmapreduce/libs/s3distcp/role/s3distcp.jar" \
 	    }, \
-	  "name": "crawlData2S3" \
+	  "Name": "crawlData2S3" \
 	 } \
 	]'
 
@@ -132,7 +132,7 @@ destroy:
 # top level target to create a new cluster of c1.mediums
 #
 .PHONY: create
-create: 
+create:
 	@ if [ -a ./jobflowid ]; then echo "jobflowid exists! exiting"; exit 1; fi
 	@ echo creating EMR cluster
 	${AWS} --output text  emr  run-job-flow --name NutchCrawler --instances ${INSTANCES} --steps ${STEPS} --log-uri "s3://${S3_BUCKET}/logs" | head -1 > ./jobflowid
@@ -142,24 +142,24 @@ create:
 #
 
 .PHONY: bootstrap
-bootstrap: | aws.conf apache-nutch-1.6-src.zip apache-nutch-1.6/build/apache-nutch-1.6.job  creates3bucket seedfiles2s3 
-	${AWS} s3 put-object --bucket ${S3_BUCKET} --key lib/apache-nutch-1.6.job.jar --body apache-nutch-1.6/build/apache-nutch-1.6.job
+bootstrap: | aws.conf apache-nutch-1.6-src.zip apache-nutch-1.6/build/apache-nutch-1.6.job  creates3bucket seedfiles2s3
+	${AWS} ${S3_API} put-object --bucket ${S3_BUCKET} --key lib/apache-nutch-1.6.job.jar --body apache-nutch-1.6/build/apache-nutch-1.6.job
 
 #
 #  create se bucket
 #
 .PHONY: creates3bucket
 creates3bucket:
-	${AWS} s3 create-bucket --bucket ${S3_BUCKET}
+	${AWS} ${S3_API} create-bucket --bucket ${S3_BUCKET}
 
 #
 #  copy from url foder to s3
 #
 .PHONY: seedfiles2s3 $(seedfiles)
-seedfiles2s3: $(seedfiles) 
+seedfiles2s3: $(seedfiles)
 
 $(seedfiles):
-	${AWS} s3 put-object --bucket ${S3_BUCKET} --key $@ --body $@
+	${AWS} ${S3_API} put-object --bucket ${S3_BUCKET} --key $@ --body $@
 
 #
 #  download and unzip nutch source code
@@ -189,8 +189,4 @@ aws.conf:
 	@echo -e ${AWS_CONF} > aws.conf
 
 s3.list: aws.conf
-	aws --output text s3 list-buckets
-
-
-
-
+	${AWS} --output text ${S3_API} list-buckets
