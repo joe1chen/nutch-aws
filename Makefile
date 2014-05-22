@@ -10,22 +10,24 @@
 #
 # commands setup (ADJUST THESE IF NEEDED)
 #
-ACCESS_KEY_ID = 
-SECRET_ACCESS_KEY = 
+ACCESS_KEY_ID =
+SECRET_ACCESS_KEY =
 EC2_KEY_NAME = paulomagalhaes
 AWS_REGION=us-east-1
-EC2_KEY_NAME = 
+EC2_KEY_NAME =
 KEYPATH	= ${EC2_KEY_NAME}.pem
-S3_BUCKET = 
+S3_BUCKET =
 CLUSTERSIZE	= 3
 DEPTH = 3
 TOPN = 5
 MASTER_INSTANCE_TYPE = m1.small
 SLAVE_INSTANCE_TYPE = m1.small
-#  
+#
 AWS	= aws
 ANT = ant
 #
+NUTCH_VERSION = 1.8
+
 ifeq ($(origin AWS_CONFIG_FILE), undefined)
 	export AWS_CONFIG_FILE:=aws.conf
 endif
@@ -69,7 +71,7 @@ STEPS = '[ \
 	      "main_class": "org.apache.nutch.crawl.Crawl", \
 	      "args": \
 	        ["s3://${S3_BUCKET}/urls", "-dir", "crawl", "-depth", "${DEPTH}", "-topN", "${TOPN}"], \
-	      "jar": "s3://${S3_BUCKET}/lib/apache-nutch-1.6.job.jar" \
+	      "jar": "s3://${S3_BUCKET}/lib/apache-nutch-${NUTCH_VERSION}.job.jar" \
 	    }, \
 	  "name": "nutch-crawl" \
 	}, \
@@ -132,7 +134,7 @@ destroy:
 # top level target to create a new cluster of c1.mediums
 #
 .PHONY: create
-create: 
+create:
 	@ if [ -a ./jobflowid ]; then echo "jobflowid exists! exiting"; exit 1; fi
 	@ echo creating EMR cluster
 	${AWS} --output text  emr  run-job-flow --name NutchCrawler --instances ${INSTANCES} --steps ${STEPS} --log-uri "s3://${S3_BUCKET}/logs" | head -1 > ./jobflowid
@@ -142,8 +144,8 @@ create:
 #
 
 .PHONY: bootstrap
-bootstrap: | aws.conf apache-nutch-1.6-src.zip apache-nutch-1.6/build/apache-nutch-1.6.job  creates3bucket seedfiles2s3 
-	${AWS} s3 put-object --bucket ${S3_BUCKET} --key lib/apache-nutch-1.6.job.jar --body apache-nutch-1.6/build/apache-nutch-1.6.job
+bootstrap: | aws.conf apache-nutch-${NUTCH_VERSION}-src.zip apache-nutch-${NUTCH_VERSION}/build/apache-nutch-${NUTCH_VERSION}.job  creates3bucket seedfiles2s3
+	${AWS} s3 put-object --bucket ${S3_BUCKET} --key lib/apache-nutch-${NUTCH_VERSION}.job.jar --body apache-nutch-${NUTCH_VERSION}/build/apache-nutch-${NUTCH_VERSION}.job
 
 #
 #  create se bucket
@@ -156,7 +158,7 @@ creates3bucket:
 #  copy from url foder to s3
 #
 .PHONY: seedfiles2s3 $(seedfiles)
-seedfiles2s3: $(seedfiles) 
+seedfiles2s3: $(seedfiles)
 
 $(seedfiles):
 	${AWS} s3 put-object --bucket ${S3_BUCKET} --key $@ --body $@
@@ -169,11 +171,16 @@ apache-nutch-1.6-src.zip:
 	unzip apache-nutch-1.6-src.zip
 	echo ${NUTCH-SITE-CONF} > apache-nutch-1.6/conf/nutch-site.xml
 
+apache-nutch-1.8-src.zip:
+	curl -O http://archive.apache.org/dist/nutch/1.8/apache-nutch-1.8-src.zip
+	unzip apache-nutch-1.8-src.zip
+	echo ${NUTCH-SITE-CONF} > apache-nutch-1.8/conf/nutch-site.xml
+
 #
 #  build nutch job jar
 #
-apache-nutch-1.6/build/apache-nutch-1.6.job: $(wildcard apache-nutch-1.6/conf/*)
-	${ANT} -f apache-nutch-1.6/build.xml
+apache-nutch-${NUTCH_VERSION}/build/apache-nutch-${NUTCH_VERSION}.job: $(wildcard apache-nutch-${NUTCH_VERSION}/conf/*)
+	${ANT} -f apache-nutch-${NUTCH_VERSION}/build.xml
 
 #
 # ssh: quick wrapper to ssh into the master node of the cluster
@@ -190,7 +197,3 @@ aws.conf:
 
 s3.list: aws.conf
 	aws --output text s3 list-buckets
-
-
-
-
