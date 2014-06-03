@@ -56,6 +56,18 @@ NUTCH-SITE-CONF= "<?xml version=\"1.0\"?> \
   <value>${CRAWLER_NAME},*</value> \
   <description></description> \
 </property> \
+<property> \
+  <name>plugin.includes</name> \
+  <value>protocol-http|urlfilter-regex|parse-(html|tika)|index-(basic|anchor)|indexer-solr|indexer-elastic|scoring-opic|urlnormalizer-(pass|regex|basic)</value> \
+  <description>Regular expression naming plugin directory names to \
+  include.  Any plugin not matching this expression is excluded. \
+  In any case you need at least include the nutch-extensionpoints plugin. By \
+  default Nutch includes crawling just HTML and plain text via HTTP, \
+  and basic indexing and search plugins. In order to use HTTPS please enable \
+  protocol-httpclient, but be aware of possible intermittent problems with the \
+  underlying commons-httpclient library. \
+  </description> \
+</property> \
 </configuration>"
 
 INSTANCES = '{  \
