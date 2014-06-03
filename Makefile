@@ -74,6 +74,29 @@ NUTCH-SITE-CONF= "<?xml version=\"1.0\"?> \
   <description></description> \
 </property> \
 <property> \
+  <name>fetcher.server.delay</name> \
+  <value>1.0</value> \
+  <description>The number of seconds the fetcher will delay between \
+   successive requests to the same server.</description> \
+</property> \
+<property> \
+  <name>fetcher.server.min.delay</name> \
+  <value>1.0</value> \
+  <description>The minimum number of seconds the fetcher will delay between \
+  successive requests to the same server. This value is applicable ONLY \
+  if fetcher.threads.per.host is greater than 1 (i.e. the host blocking \
+  is turned off).</description> \
+</property> \
+<property> \
+  <name>fetcher.queue.depth.multiplier</name> \
+  <value>2000</value> \
+  <description>(EXPERT)The fetcher buffers the incoming URLs into queues based on the [host|domain|IP] \
+  (see param fetcher.queue.mode). The depth of the queue is the number of threads times the value of this parameter. \
+  A large value requires more memory but can improve the performance of the fetch when the order of the URLS in the fetch list \
+  is not optimal. \
+  </description> \
+</property> \
+<property> \
   <name>fetcher.max.crawl.delay</name> \
   <value>10</value> \
   <description> \
