@@ -11,11 +11,13 @@
 # commands setup (ADJUST THESE IF NEEDED)
 #
 ACCESS_KEY_ID =
-SECRET_ACCESS_KEY
+SECRET_ACCESS_KEY =
 EC2_KEY_NAME =
+S3_BUCKET =
+CRAWLER_NAME =
+
 AWS_REGION = us-east-1
 KEYPATH	= ${EC2_KEY_NAME}.pem
-S3_BUCKET =
 CLUSTERSIZE	= 3
 DEPTH = 3
 TOPN = 5
@@ -46,12 +48,12 @@ NUTCH-SITE-CONF= "<?xml version=\"1.0\"?> \
 <configuration> \
 <property> \
   <name>http.agent.name</name> \
-  <value>efcrawler</value> \
+  <value>${CRAWLER_NAME}</value> \
   <description></description> \
 </property> \
 <property> \
   <name>http.robots.agents</name> \
-  <value>mycrawler,*</value> \
+  <value>${CRAWLER_NAME},*</value> \
   <description></description> \
 </property> \
 </configuration>"
