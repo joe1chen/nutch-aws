@@ -24,11 +24,20 @@ ES_INDEX =
 
 AWS_REGION = us-east-1
 KEYPATH	= ${EC2_KEY_NAME}.pem
-CLUSTERSIZE	= 3
-DEPTH = 3
-TOPN = 5
+CLUSTERSIZE= 3
 MASTER_INSTANCE_TYPE = m1.large
 SLAVE_INSTANCE_TYPE = m1.large
+
+# Crawl Settings
+DEPTH = 3
+# CLUSTERSIZE - 1
+NUM_SLAVES = 5
+NUM_TASKS = 5
+# TopN is NUM_SLAVES * 50000
+TOPN = 250000
+NUM_FETCHER_THREADS = 50
+TIME_LIMIT_FETCH=60
+
 #
 AWS	= aws
 ANT = ant
@@ -128,12 +137,48 @@ INSTANCES = '{  \
 STEPS = '[ \
 	{  \
 	  "HadoopJarStep": { \
-	      "MainClass": "org.apache.nutch.crawl.Crawl", \
+	      "MainClass": "org.apache.nutch.crawl.Injector", \
 	      "Args": \
-	        ["s3://${S3_BUCKET}/urls", "-dir", "crawl", "-depth", "${DEPTH}", "-topN", "${TOPN}"], \
+	        ["crawl/crawldb", "s3://${S3_BUCKET}/urls"], \
 	      "Jar": "s3://${S3_BUCKET}/lib/apache-nutch-${NUTCH_VERSION}.job.jar" \
 	    }, \
-	  "Name": "nutch-crawl" \
+	  "Name": "Inject Seed URLs" \
+	}, \
+	{  \
+		"HadoopJarStep": { \
+				"MainClass": "org.apache.nutch.crawl.Generator", \
+				"Args": \
+					["crawl/crawldb", "crawl/segments", "-topN", "${TOPN}", "-numFetchers", "${NUM_SLAVES}", "-noFilter"], \
+				"Jar": "s3://${S3_BUCKET}/lib/apache-nutch-${NUTCH_VERSION}.job.jar" \
+			}, \
+		"Name": "Generate Fetch List" \
+	}, \
+	{  \
+		"HadoopJarStep": { \
+				"MainClass": "org.apache.nutch.fetcher.Fetcher", \
+				"Args": \
+					["crawl/segments/*", "-D", "fetcher.timelimit.mins=${TIME_LIMIT_FETCH}", "-noParsing", "-threads", "${NUM_FETCHER_THREADS}"], \
+				"Jar": "s3://${S3_BUCKET}/lib/apache-nutch-${NUTCH_VERSION}.job.jar" \
+			}, \
+		"Name": "Fetch Segment" \
+	}, \
+	{  \
+		"HadoopJarStep": { \
+				"MainClass": "org.apache.nutch.parse.ParseSegment", \
+				"Args": \
+					["crawl/segments/*", "-D", "mapred.skip.attempts.to.start.skipping=2", "-D", "mapred.skip.map.max.skip.records=1"], \
+				"Jar": "s3://${S3_BUCKET}/lib/apache-nutch-${NUTCH_VERSION}.job.jar" \
+			}, \
+		"Name": "Parse Segment" \
+	}, \
+	{  \
+		"HadoopJarStep": { \
+				"MainClass": "org.apache.nutch.crawl.CrawlDb", \
+				"Args": \
+					["crawl/crawldb", "crawl/segments/*"], \
+				"Jar": "s3://${S3_BUCKET}/lib/apache-nutch-${NUTCH_VERSION}.job.jar" \
+			}, \
+		"Name": "Update Crawl DB" \
 	}, \
 	{  \
 	  "HadoopJarStep": { \
@@ -142,33 +187,41 @@ STEPS = '[ \
 	        ["crawl/mergedsegments", "-dir", "crawl/segments"], \
 	      "Jar": "s3://${S3_BUCKET}/lib/apache-nutch-${NUTCH_VERSION}.job.jar" \
 	    }, \
-	  "Name": "nutch-crawl" \
+	  "Name": "Merge Segments" \
 	}, \
 	{  \
 	  "HadoopJarStep": { \
 	      "Args": \
-	        ["--src","hdfs:///user/hadoop/crawl/crawldb","--dest","s3://${S3_BUCKET}/crawl/crawldb","--srcPattern",".*","--outputCodec","snappy"], \
+	        ["--src","hdfs:///user/hadoop/crawl/crawldb","--dest","s3://${S3_BUCKET}/crawl/crawldb","--srcPattern",".*"], \
 	      "Jar": "s3://elasticmapreduce/libs/s3distcp/role/s3distcp.jar" \
 	    }, \
-	  "Name": "crawlData2S3" \
-	 }, \
+	  "Name": "Copy CrawlDB to S3" \
+	}, \
 	{  \
 	  "HadoopJarStep": { \
 	      "Args": \
-	        ["--src","hdfs:///user/hadoop/crawl/linkdb","--dest","s3://${S3_BUCKET}/crawl/linkdb","--srcPattern",".*","--outputCodec","snappy"], \
+	        ["--src","hdfs:///user/hadoop/crawl/linkdb","--dest","s3://${S3_BUCKET}/crawl/linkdb","--srcPattern",".*"], \
 	      "Jar": "s3://elasticmapreduce/libs/s3distcp/role/s3distcp.jar" \
 	    }, \
-	  "Name": "crawlData2S3" \
-	 }, \
+	  "Name": "Copy LinkDB to S3" \
+	}, \
 	{  \
 	  "HadoopJarStep": { \
 	      "Args": \
-	        ["--src","hdfs:///user/hadoop/crawl/mergedsegments","--dest","s3://${S3_BUCKET}/crawl/segments","--srcPattern",".*","--outputCodec","snappy"], \
+	        ["--src","hdfs:///user/hadoop/crawl/segments","--dest","s3://${S3_BUCKET}/crawl/segments","--srcPattern",".*"], \
 	      "Jar": "s3://elasticmapreduce/libs/s3distcp/role/s3distcp.jar" \
 	    }, \
-	  "Name": "crawlData2S3" \
-	 } \
-	]'
+	  "Name": "Copy Segments to S3" \
+	}, \
+	{  \
+		"HadoopJarStep": { \
+				"Args": \
+					["--src","hdfs:///user/hadoop/crawl/mergedsegments","--dest","s3://${S3_BUCKET}/crawl/mergedsegments","--srcPattern",".*"], \
+				"Jar": "s3://elasticmapreduce/libs/s3distcp/role/s3distcp.jar" \
+			}, \
+		"Name": "Copy Merged Segments to S3" \
+	} \
+]'
 
 #
 # make targets
