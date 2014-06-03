@@ -31,9 +31,8 @@ SLAVE_INSTANCE_TYPE = m1.large
 # Crawl Settings
 DEPTH = 3
 # CLUSTERSIZE - 1
-NUM_SLAVES = 5
-NUM_TASKS = 5
-# TopN is NUM_SLAVES * 50000
+NUM_FETCHERS = 5
+# TopN is NUM_FETCHERS * 50000
 TOPN = 250000
 NUM_FETCHER_THREADS = 50
 TIME_LIMIT_FETCH=60
@@ -148,7 +147,7 @@ STEPS = '[ \
 		"HadoopJarStep": { \
 				"MainClass": "org.apache.nutch.crawl.Generator", \
 				"Args": \
-					["crawl/crawldb", "crawl/segments", "-topN", "${TOPN}", "-numFetchers", "${NUM_SLAVES}", "-noFilter"], \
+					["crawl/crawldb", "crawl/segments", "-topN", "${TOPN}", "-numFetchers", "${NUM_FETCHERS}", "-noFilter"], \
 				"Jar": "s3://${S3_BUCKET}/lib/apache-nutch-${NUTCH_VERSION}.job.jar" \
 			}, \
 		"Name": "Generate Fetch List" \
