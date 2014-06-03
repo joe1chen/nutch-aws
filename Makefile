@@ -181,15 +181,6 @@ STEPS = '[ \
 	}, \
 	{  \
 	  "HadoopJarStep": { \
-	      "MainClass": "org.apache.nutch.segment.SegmentMerger", \
-	      "Args": \
-	        ["crawl/mergedsegments", "-dir", "crawl/segments"], \
-	      "Jar": "s3://${S3_BUCKET}/lib/apache-nutch-${NUTCH_VERSION}.job.jar" \
-	    }, \
-	  "Name": "Merge Segments" \
-	}, \
-	{  \
-	  "HadoopJarStep": { \
 	      "Args": \
 	        ["--src","hdfs:///user/hadoop/crawl/crawldb","--dest","s3://${S3_BUCKET}/crawl/crawldb","--srcPattern",".*"], \
 	      "Jar": "s3://elasticmapreduce/libs/s3distcp/role/s3distcp.jar" \
@@ -211,14 +202,6 @@ STEPS = '[ \
 	      "Jar": "s3://elasticmapreduce/libs/s3distcp/role/s3distcp.jar" \
 	    }, \
 	  "Name": "Copy Segments to S3" \
-	}, \
-	{  \
-		"HadoopJarStep": { \
-				"Args": \
-					["--src","hdfs:///user/hadoop/crawl/mergedsegments","--dest","s3://${S3_BUCKET}/crawl/mergedsegments","--srcPattern",".*"], \
-				"Jar": "s3://elasticmapreduce/libs/s3distcp/role/s3distcp.jar" \
-			}, \
-		"Name": "Copy Merged Segments to S3" \
 	} \
 ]'
 
