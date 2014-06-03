@@ -16,6 +16,12 @@ EC2_KEY_NAME =
 S3_BUCKET =
 CRAWLER_NAME =
 
+# Elasticsearch Settings
+ES_HOST =
+ES_PORT =
+ES_CLUSTERNAME =
+ES_INDEX =
+
 AWS_REGION = us-east-1
 KEYPATH	= ${EC2_KEY_NAME}.pem
 CLUSTERSIZE	= 3
@@ -67,6 +73,46 @@ NUTCH-SITE-CONF= "<?xml version=\"1.0\"?> \
   protocol-httpclient, but be aware of possible intermittent problems with the \
   underlying commons-httpclient library. \
   </description> \
+</property> \
+<!-- Elasticsearch properties --> \
+\
+<property> \
+  <name>elastic.host</name> \
+  <value>${ES_HOST}</value> \
+  <description>The hostname to send documents to using TransportClient. Either host \
+  and port must be defined or cluster.</description> \
+</property> \
+\
+<property> \
+  <name>elastic.port</name> \
+  <value>${ES_PORT}</value> \
+  <description> \
+  </description> \
+</property> \
+\
+<property> \
+  <name>elastic.cluster</name> \
+  <value>${ES_CLUSTERNAME}</value> \
+  <description>The cluster name to discover. Either host and port must be defined \
+  or cluster.</description> \
+</property> \
+\
+<property> \
+  <name>elastic.index</name> \
+  <value>${ES_INDEX}</value> \
+  <description>Default index to send documents to.</description> \
+</property> \
+\
+<property> \
+  <name>elastic.max.bulk.docs</name> \
+  <value>250</value> \
+  <description>Maximum size of the bulk in number of documents.</description> \
+</property> \
+\
+<property> \
+  <name>elastic.max.bulk.size</name> \
+  <value>2500500</value> \
+  <description>Maximum size of the bulk in bytes.</description> \
 </property> \
 </configuration>"
 
