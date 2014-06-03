@@ -10,9 +10,9 @@
 #
 # commands setup (ADJUST THESE IF NEEDED)
 #
-ACCESS_KEY_ID = 
-SECRET_ACCESS_KEY 
-EC2_KEY_NAME = 
+ACCESS_KEY_ID =
+SECRET_ACCESS_KEY
+EC2_KEY_NAME =
 AWS_REGION = us-east-1
 KEYPATH	= ${EC2_KEY_NAME}.pem
 S3_BUCKET =
@@ -80,7 +80,7 @@ STEPS = '[ \
 	      "MainClass": "org.apache.nutch.segment.SegmentMerger", \
 	      "Args": \
 	        ["crawl/mergedsegments", "-dir", "crawl/segments"], \
-	      "Jar": "s3://${S3_BUCKET}/lib/apache-nutch-1.6.job.jar" \
+	      "Jar": "s3://${S3_BUCKET}/lib/apache-nutch-${NUTCH_VERSION}.job.jar" \
 	    }, \
 	  "Name": "nutch-crawl" \
 	}, \
