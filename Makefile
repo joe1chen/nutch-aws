@@ -74,6 +74,17 @@ NUTCH-SITE-CONF= "<?xml version=\"1.0\"?> \
   <description></description> \
 </property> \
 <property> \
+  <name>fetcher.max.crawl.delay</name> \
+  <value>10</value> \
+  <description> \
+    If the Crawl-Delay in robots.txt is set to greater than this value (in \
+    seconds) then the fetcher will skip this page, generating an error report. \
+    If set to -1 the fetcher will never skip such pages and will wait the \
+    amount of time retrieved from robots.txt Crawl-Delay, however long that \
+    might be. \
+ </description> \
+</property> \
+<property> \
   <name>plugin.includes</name> \
   <value>protocol-http|urlfilter-regex|parse-(html|tika)|index-(basic|anchor)|indexer-solr|indexer-elastic|scoring-opic|urlnormalizer-(pass|regex|basic)</value> \
   <description>Regular expression naming plugin directory names to \
