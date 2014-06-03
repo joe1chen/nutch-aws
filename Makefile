@@ -217,6 +217,15 @@ STEPS = '[ \
 		"Name": "Update Crawl DB" \
 	}, \
 	{  \
+		"HadoopJarStep": { \
+				"MainClass": "org.apache.nutch.crawl.LinkDb", \
+				"Args": \
+					["crawl/linkdb", "crawl/segments/*"], \
+				"Jar": "s3://${S3_BUCKET}/lib/apache-nutch-${NUTCH_VERSION}.job.jar" \
+			}, \
+		"Name": "Invert Links" \
+	}, \
+	{  \
 	  "HadoopJarStep": { \
 	      "Args": \
 	        ["--src","hdfs:///user/hadoop/crawl/crawldb","--dest","s3://${S3_BUCKET}/crawl/crawldb","--srcPattern",".*"], \
@@ -227,18 +236,18 @@ STEPS = '[ \
 	{  \
 	  "HadoopJarStep": { \
 	      "Args": \
-	        ["--src","hdfs:///user/hadoop/crawl/linkdb","--dest","s3://${S3_BUCKET}/crawl/linkdb","--srcPattern",".*"], \
-	      "Jar": "s3://elasticmapreduce/libs/s3distcp/role/s3distcp.jar" \
-	    }, \
-	  "Name": "Copy LinkDB to S3" \
-	}, \
-	{  \
-	  "HadoopJarStep": { \
-	      "Args": \
 	        ["--src","hdfs:///user/hadoop/crawl/segments","--dest","s3://${S3_BUCKET}/crawl/segments","--srcPattern",".*"], \
 	      "Jar": "s3://elasticmapreduce/libs/s3distcp/role/s3distcp.jar" \
 	    }, \
 	  "Name": "Copy Segments to S3" \
+	}, \
+	{  \
+		"HadoopJarStep": { \
+				"Args": \
+					["--src","hdfs:///user/hadoop/crawl/linkdb","--dest","s3://${S3_BUCKET}/crawl/linkdb","--srcPattern",".*"], \
+				"Jar": "s3://elasticmapreduce/libs/s3distcp/role/s3distcp.jar" \
+			}, \
+		"Name": "Copy LinkDB to S3" \
 	} \
 ]'
 
