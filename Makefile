@@ -37,6 +37,9 @@ TOPN = 250000
 NUM_FETCHER_THREADS = 50
 TIME_LIMIT_FETCH=60
 
+SPECULATIVE_EXEC_REDUCE = mapred.reduce.tasks.speculative.execution=false
+SPECULATIVE_EXEC_MAP = mapred.map.tasks.speculative.execution=false
+
 #
 AWS	= aws
 ANT = ant
@@ -147,7 +150,7 @@ STEPS = '[ \
 		"HadoopJarStep": { \
 				"MainClass": "org.apache.nutch.crawl.Generator", \
 				"Args": \
-					["crawl/crawldb", "crawl/segments", "-topN", "${TOPN}", "-numFetchers", "${NUM_FETCHERS}", "-noFilter"], \
+					["crawl/crawldb", "crawl/segments", "-topN", "${TOPN}", "-numFetchers", "${NUM_FETCHERS}", "-noFilter", "-D", "${SPECULATIVE_EXEC_MAP}", "-D", "${SPECULATIVE_EXEC_REDUCE}"], \
 				"Jar": "s3://${S3_BUCKET}/lib/apache-nutch-${NUTCH_VERSION}.job.jar" \
 			}, \
 		"Name": "Generate Fetch List" \
@@ -156,7 +159,7 @@ STEPS = '[ \
 		"HadoopJarStep": { \
 				"MainClass": "org.apache.nutch.fetcher.Fetcher", \
 				"Args": \
-					["crawl/segments/*", "-D", "fetcher.timelimit.mins=${TIME_LIMIT_FETCH}", "-noParsing", "-threads", "${NUM_FETCHER_THREADS}"], \
+					["crawl/segments/*", "-D", "fetcher.timelimit.mins=${TIME_LIMIT_FETCH}", "-noParsing", "-threads", "${NUM_FETCHER_THREADS}", "-D", "${SPECULATIVE_EXEC_MAP}", "-D", "${SPECULATIVE_EXEC_REDUCE}"], \
 				"Jar": "s3://${S3_BUCKET}/lib/apache-nutch-${NUTCH_VERSION}.job.jar" \
 			}, \
 		"Name": "Fetch Segment" \
@@ -165,7 +168,7 @@ STEPS = '[ \
 		"HadoopJarStep": { \
 				"MainClass": "org.apache.nutch.parse.ParseSegment", \
 				"Args": \
-					["crawl/segments/*", "-D", "mapred.skip.attempts.to.start.skipping=2", "-D", "mapred.skip.map.max.skip.records=1"], \
+					["crawl/segments/*", "-D", "mapred.skip.attempts.to.start.skipping=2", "-D", "mapred.skip.map.max.skip.records=1", "-D", "${SPECULATIVE_EXEC_MAP}", "-D", "${SPECULATIVE_EXEC_REDUCE}"], \
 				"Jar": "s3://${S3_BUCKET}/lib/apache-nutch-${NUTCH_VERSION}.job.jar" \
 			}, \
 		"Name": "Parse Segment" \
@@ -174,7 +177,7 @@ STEPS = '[ \
 		"HadoopJarStep": { \
 				"MainClass": "org.apache.nutch.crawl.CrawlDb", \
 				"Args": \
-					["crawl/crawldb", "crawl/segments/*"], \
+					["crawl/crawldb", "crawl/segments/*", "-D", "${SPECULATIVE_EXEC_MAP}", "-D", "${SPECULATIVE_EXEC_REDUCE}"], \
 				"Jar": "s3://${S3_BUCKET}/lib/apache-nutch-${NUTCH_VERSION}.job.jar" \
 			}, \
 		"Name": "Update Crawl DB" \
