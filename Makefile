@@ -80,7 +80,7 @@ STEPS = '[ \
 	      "main_class": "org.apache.nutch.segment.SegmentMerger", \
 	      "args": \
 	        ["crawl/mergedsegments", "-dir", "crawl/segments"], \
-	      "jar": "s3://${S3_BUCKET}/lib/apache-nutch-1.6.job.jar" \
+	      "jar": "s3://${S3_BUCKET}/lib/apache-nutch-${NUTCH_VERSION}.job.jar" \
 	    }, \
 	  "name": "nutch-crawl" \
 	}, \
